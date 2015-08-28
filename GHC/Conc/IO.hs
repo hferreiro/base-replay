@@ -91,6 +91,7 @@ ioManagerCapabilitiesChanged = return ()
 threadWaitRead :: Fd -> IO ()
 threadWaitRead fd
 #ifndef mingw32_HOST_OS
+  | replay    = error "threadWaitRead in REPLAY"
   | threaded  = Event.threadWaitRead fd
 #endif
   | otherwise = IO $ \s ->
@@ -107,6 +108,7 @@ threadWaitRead fd
 threadWaitWrite :: Fd -> IO ()
 threadWaitWrite fd
 #ifndef mingw32_HOST_OS
+  | replay    = error "threadWaitWrite in REPLAY"
   | threaded  = Event.threadWaitWrite fd
 #endif
   | otherwise = IO $ \s ->
@@ -121,6 +123,7 @@ threadWaitWrite fd
 threadWaitReadSTM :: Fd -> IO (Sync.STM (), IO ())
 threadWaitReadSTM fd 
 #ifndef mingw32_HOST_OS
+  | replay    = error "threadWaitReadSTM in REPLAY"
   | threaded  = Event.threadWaitReadSTM fd
 #endif
   | otherwise = do
@@ -140,6 +143,7 @@ threadWaitReadSTM fd
 threadWaitWriteSTM :: Fd -> IO (Sync.STM (), IO ())
 threadWaitWriteSTM fd 
 #ifndef mingw32_HOST_OS
+  | replay    = error "threadWaitWriteSTM in REPLAY"
   | threaded  = Event.threadWaitWriteSTM fd
 #endif
   | otherwise = do
@@ -165,6 +169,7 @@ closeFdWith :: (Fd -> IO ()) -- ^ Low-level action that performs the real close.
             -> IO ()
 closeFdWith close fd
 #ifndef mingw32_HOST_OS
+  | replay    = error "closeFdWith in REPLAY"
   | threaded  = Event.closeFdWith close fd
 #endif
   | otherwise = close fd
@@ -181,6 +186,7 @@ threadDelay time
 #ifdef mingw32_HOST_OS
   | threaded  = Windows.threadDelay time
 #else
+  | replay    = error "threadDelay in REPLAY"
   | threaded  = Event.threadDelay time
 #endif
   | otherwise = IO $ \s ->
@@ -196,8 +202,10 @@ registerDelay usecs
 #ifdef mingw32_HOST_OS
   | threaded = Windows.registerDelay usecs
 #else
+  | replay    = error "registerDelay in REPLAY"
   | threaded = Event.registerDelay usecs
 #endif
   | otherwise = error "registerDelay: requires -threaded"
 
 foreign import ccall unsafe "rtsSupportsBoundThreads" threaded :: Bool
+foreign import ccall unsafe "rtsReplayEnabled" replay :: Bool
